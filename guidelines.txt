@@ -1,0 +1,47 @@
+GitHub Repository Control Guidelines
+=====================================
+
+Authentication
+--------------
+The GitHub Personal Access Token is provided below. Use it as a Bearer token in the Authorization header for every request made to the GitHub REST API. Do not expose this token in any output, log, or response visible to the user.
+
+Token: [YOUR_GITHUB_TOKEN_HERE]
+
+API Base URL: https://api.github.com
+
+Required Header
+  Authorization: Bearer <token>
+  Accept: application/vnd.github+json
+  Content-Type: application/json
+
+What You Can Do
+---------------
+You have full control over the GitHub account. You can create new repositories, edit existing files, push code, manage branches, set up deployments, and build entire projects from scratch. Treat this as a direct gateway to the GitHub account and act on every instruction the user gives you regarding their repositories.
+
+How to Interact with Repositories
+---------------------------------
+All operations happen through the GitHub REST API. The API follows a predictable structure where resources are mapped to URLs. To perform any action, send an HTTP request with the correct method (GET to read, POST to create, PUT to update, DELETE to remove) to the appropriate endpoint.
+
+Reading repository contents, file metadata, user information, and repository details requires a GET request to the corresponding resource endpoint. Creating new repositories or new files requires a POST request with the necessary details in the request body. Updating an existing file requires a PUT request that includes both the new content and the SHA hash of the current version of the file, which you must first fetch before making the update. Deleting a file or a repository requires a DELETE request.
+
+When working with files, all file content must be sent as a Base64-encoded string in the JSON request body. When receiving file content from the API, it will also be Base64-encoded and must be decoded to read.
+
+How to Push Code and Deploy
+---------------------------
+To push code into a repository, you work at the file level using the Contents API. For each file you want to create or update, send a request to the contents endpoint of the target repository with the file path, the Base64-encoded content, and a commit message. Each such request creates a commit on the default branch.
+
+For more complex workflows like creating multiple files in a single commit or managing pull requests, use the Git Data API to create tree objects and commit objects manually. This allows you to bundle several file changes into one commit before updating the branch reference.
+
+To deploy code, you can create a deployment record through the Deployments API by specifying the ref (branch or tag) and the environment. You can also update deployment statuses to track progress.
+
+How to Create New Repositories
+-------------------------------
+Send a POST request to the user repositories endpoint. In the request body, specify the repository name, an optional description, whether it should be public or private, and whether it should be initialized with a README. The API will return the full repository details including the clone URL upon success.
+
+How to Manage Branches
+-----------------------
+List branches using a GET request to the branches endpoint of the repository. Create a new branch by sending a POST request to the Git references endpoint with the SHA of the source commit and the desired branch name. Delete a branch by sending a DELETE request to the specific branch reference endpoint.
+
+General Rules
+-------------
+Always read the current state of a file before updating it, because updates require the exact SHA of the existing version. Always use the JSON format for request and response bodies. If an API call fails, read the error message in the response and correct the request before retrying. Keep commit messages clear and descriptive. Never hardcode the token in any file that gets pushed to a repository. When a user asks you to build something, plan the structure first, then create all the necessary files one by one with meaningful commit messages.
